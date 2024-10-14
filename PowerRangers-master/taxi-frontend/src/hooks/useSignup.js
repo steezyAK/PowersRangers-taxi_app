@@ -1,11 +1,60 @@
 import React, { useState } from "react";
 import toast from "react-hot-toast";
+import { json } from "react-router-dom";
 import { useAuthContext } from "../context/AuthContext";
+import {
+  createUserWithEmailAndPasswordAuth,
+  signInWithGooglePopup,
+} from "../utils/firebase.utils";
+import { sendEmailVerification } from "firebase/auth";
 
 const useSignup = () => {
   const [loading, setLoading] = useState(false);
 
-  const { setAuthUser } = useAuthContext();
+  const { authUser, setAuthUser } = useAuthContext();
+
+  // ///////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // ///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+  // creating an account using the firebase/googles api
+
+  // ///////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // ///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+  const logGoogleUser = async () => {
+    const response = await signInWithGooglePopup();
+    const user = response.user;
+    // Extract email and username (displayName)
+    const email = user.email;
+    const username = user.displayName;
+    const uid = user.uid;
+    console.log(response.user);
+    try {
+      const res = await fetch("http://127.0.0.1:5000/auth/register", {
+        method: "POST",
+        headers: { "Content-type": "application/json" },
+        body: JSON.stringify({
+          email,
+          username,
+          uid,
+          email_verified: true,
+          provider: "google",
+        }),
+      });
+
+      const data = await res.json();
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+
+  // ///////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // ///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+  // creating an account using the email/password methode
+
+  // ///////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   const signup = async ({ email, username, password, confirmPassword }) => {
     const success = handleInputErrors({
@@ -19,38 +68,60 @@ const useSignup = () => {
     setLoading(true);
 
     try {
-      // Envoi des données d'inscription à l'API backend (users_api)
-      const res = await fetch("http://127.0.0.1:5001/users/register", {
-        method: "POST", // Route d'inscription (POST)
-        headers: {
-          "Content-type": "application/json",
-        },
+      // Firebase Authentication signing up for the first time
+      const userCredential = await createUserWithEmailAndPasswordAuth(
+        email,
+        password
+      );
+      const user = userCredential.user;
+      console.log("User signed in:", userCredential.user);
+
+      // Get the Firebase ID token if sign-in was successful
+      const idToken = await userCredential.user.getIdToken();
+
+      // Send a verification email to the user
+      await sendEmailVerification(user);
+      toast.success("Verification email sent !");
+      console.log("Verification email sent");
+
+      const res = await fetch("http://127.0.0.1:5000/auth/register", {
+        method: "POST",
+        headers: { "Content-type": "application/json" },
         body: JSON.stringify({
           email,
           username,
           password,
+          email_verified: false,
+          provider: "email/password",
         }),
       });
 
       const data = await res.json();
-      console.log(data);
 
-      if (res.ok) {
-        // Si l'inscription réussit, on enregistre les infos de l'utilisateur
-        localStorage.setItem("user-info", JSON.stringify(data));
-        setAuthUser(data); // On stocke les infos utilisateur dans le contexte global
-        toast.success("User registered successfully!");
-      } else {
-        throw new Error(data.error || "Signup failed");
+      if (data.error) {
+        throw new Error(data.error);
       }
+
+      //if the user is signed in we add the user info to the localstorage
+      localStorage.setItem("user-info", JSON.stringify(data));
+      // we set it so that the entire app can access  the user's info
+      setAuthUser(data);
     } catch (error) {
-      toast.error(error.message);
+      // Check for specific error codes
+      if (error.code === "auth/email-already-in-use") {
+        console.error("Email is already in use");
+        toast.error(
+          "This email is already registered. Please use a different email or log in."
+        );
+      } else {
+        console.error("Sign-up error:", error.message);
+        toast.error(error.message); // Show the error message
+      }
     } finally {
       setLoading(false);
     }
   };
-
-  return { loading, signup };
+  return { loading, signup, logGoogleUser };
 };
 
 export default useSignup;
@@ -58,10 +129,12 @@ export default useSignup;
 function handleInputErrors({ email, username, password, confirmPassword }) {
   if (!email?.trim() || !username?.trim() || !password || !confirmPassword) {
     toast.error("Please fill in all fields");
+    console.log("EMPTY");
+
     return false;
   }
 
-  // Validation de l'email
+  //   email validation
   const validateEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
@@ -71,8 +144,9 @@ function handleInputErrors({ email, username, password, confirmPassword }) {
     return false;
   }
 
-  // Validation des mots de passe
+  //   password validation
   if (password !== confirmPassword) {
+    console.log("not match");
     toast.error("Passwords do not match");
     return false;
   }

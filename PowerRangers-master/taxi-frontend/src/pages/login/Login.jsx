@@ -79,16 +79,15 @@ const Login = () => {
             </button>
 
             <p>or</p>
-
-            <button className="btn w-full">
-              <FcGoogle />
-              LogIn with Google
-            </button>
-            <Link to="/signup" className="link link-primary text-sm">
-              Create an account !
-            </Link>
           </div>
         </form>
+        <button className="btn w-1/2">
+          <FcGoogle />
+          LogIn with Google
+        </button>
+        <Link to="/signup" className="link link-primary text-sm">
+          Create an account !
+        </Link>
       </div>
     </div>
   );
