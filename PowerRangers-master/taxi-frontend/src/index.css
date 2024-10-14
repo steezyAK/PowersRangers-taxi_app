@@ -1,0 +1,31 @@
+/* :root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #242424;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+} */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.bg-gradient {
+  background: rgb(29, 108, 128);
+  background: linear-gradient(
+    90deg,
+    rgba(29, 108, 128, 1) 0%,
+    rgba(10, 7, 38, 1) 100%
+  );
+}
+
+.blue {
+  background-color: blue;
+}
