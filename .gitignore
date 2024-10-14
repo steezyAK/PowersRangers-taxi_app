@@ -31,4 +31,4 @@ ui
 # Python virtual environment folders
 env/
 venv/
-.env/logs
+.env/
