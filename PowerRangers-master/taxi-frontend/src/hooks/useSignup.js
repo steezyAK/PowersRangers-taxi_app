@@ -43,6 +43,15 @@ const useSignup = () => {
       });
 
       const data = await res.json();
+      if (data.error) {
+        throw new Error("problem sigining in !");
+      }
+
+      //if the user is signed in we add the user info to the localstorage
+      localStorage.setItem("user-info", JSON.stringify(data));
+      // we set it so that the entire app can access  the user's info
+      setAuthUser(data);
+      toast.success("Signup was succesfull u may log in now !");
     } catch (error) {
       toast.error(error.message);
     }
@@ -74,7 +83,8 @@ const useSignup = () => {
         password
       );
       const user = userCredential.user;
-      console.log("User signed in:", userCredential.user);
+      console.log("User signed in:", user);
+      console.log("User signed in:", user.uid);
 
       // Get the Firebase ID token if sign-in was successful
       const idToken = await userCredential.user.getIdToken();
@@ -93,6 +103,7 @@ const useSignup = () => {
           password,
           email_verified: false,
           provider: "email/password",
+          uid: user.uid,
         }),
       });
 

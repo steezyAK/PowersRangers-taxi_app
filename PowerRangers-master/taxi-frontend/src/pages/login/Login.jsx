@@ -8,7 +8,7 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const { loading, login } = useLogin();
+  const { loading, login, loginWithGoogle } = useLogin();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -81,7 +81,7 @@ const Login = () => {
             <p>or</p>
           </div>
         </form>
-        <button className="btn w-1/2">
+        <button className="btn w-1/2" onClick={loginWithGoogle}>
           <FcGoogle />
           LogIn with Google
         </button>
