@@ -24,22 +24,45 @@ def home():
 
 @app.route('/auth/register', methods=['POST'])
 def register():
-    try:
-       data = request.get_json()
-       username = data.get('username')
-       password = data.get('password')
+	try:
+		data = request.get_json()
+		if data.provider == "google" :
+			try:
+				username = data.get('username')
+				uid = data.get('uid')
+				email_verified = data.get('email_verified')
 
-       hashed_password = generate_password_hash(password)
+				# hashed_password = generate_password_hash(password)
 
-       user = User(username=username,password=hashed_password)
-    
+				user = User(username=username, uid=uid, email_verified=email_verified)
+				
+				db_session.add(user)
+				db_session.commit()
 
-       db_session.add(user)
-       db_session.commit()
+				return jsonify({"message": "User registered successfully"}),201
+			except Exception as e:
+					return jsonify({"error": str(e)}), 500
+                     
+		elif data.provider == "email/password":
+			try:
+					username = data.get('username')
+					password = data.get('password')
+					email_verified = data.get('email_verified')
 
-       return jsonify({"message": "User registered successfully"}),201
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+					hashed_password = generate_password_hash(password)
+
+					user = User(username=username,password=hashed_password,email_verified=email_verified)
+					
+
+					db_session.add(user)
+					db_session.commit()
+
+					return jsonify({"message": "User registered successfully"}),201
+			except Exception as e:
+				return jsonify({"error": str(e)}), 500
+			
+	except Exception as e:
+			return jsonify({"error": str(e)}), 500
 
 
 @app.route('/auth/login', methods=['POST'])
@@ -60,7 +83,20 @@ def login():
           return jsonify({"error": "Invalid email or password"}), 401
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
 
+# route de connexion avec firebase/google
+@app.route('/auth/googleLogin', methode=['POST'])
+def googleLogin():
+    try:
+        data = request.get_json()
+        email = data.get('email')
+        password = data.get('password')
+        uid = data.get('uid')
+        return 0
+    except Exception as e:
+        return e
+    return 0
     
 
 if __name__ == '__main__':
