@@ -91,7 +91,7 @@ const useSignup = () => {
 
       // Send a verification email to the user
       await sendEmailVerification(user);
-      toast.success("Verification email sent !");
+      // toast.success("Verification email sent !");
       console.log("Verification email sent");
 
       const res = await fetch("http://127.0.0.1:5000/auth/register", {
@@ -117,6 +117,7 @@ const useSignup = () => {
       localStorage.setItem("user-info", JSON.stringify(data));
       // we set it so that the entire app can access  the user's info
       setAuthUser(data);
+      return toast.success("Verification email sent !");
     } catch (error) {
       // Check for specific error codes
       if (error.code === "auth/email-already-in-use") {
@@ -126,7 +127,7 @@ const useSignup = () => {
         );
       } else {
         console.error("Sign-up error:", error.message);
-        toast.error(error.message); // Show the error message
+        toast.error("Ussername already used !"); // Show the error message
       }
     } finally {
       setLoading(false);

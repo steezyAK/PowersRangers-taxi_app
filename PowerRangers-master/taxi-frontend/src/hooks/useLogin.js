@@ -115,7 +115,7 @@ const useLogin = () => {
       }
 
       console.error("Login error:", error);
-      toast.error(error.message);
+      toast.error("error.message");
     } finally {
       setLoading(false);
     }

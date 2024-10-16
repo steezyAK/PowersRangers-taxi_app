@@ -32,3 +32,4 @@ ui
 env/
 venv/
 .env
+new_env/

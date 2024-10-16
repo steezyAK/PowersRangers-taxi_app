@@ -10,7 +10,7 @@ const ComingSoon = () => {
     <div className="card">
       <div className="header">
         <div className="logo">
-          <a href=".">Taxi-App</a>
+          <a href="/comingsoon">Drop</a>
         </div>
         <div className="social">
           <a
