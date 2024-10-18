@@ -13,5 +13,5 @@ class User(Base):
     email_verified = Column(Boolean, default=False)  # Track if email is verified
     created_at = Column(DateTime, default=datetime.utcnow)  # When the user registered
 
-    # i wiil add the database cleaning script later where i delete all the non-verified emails 
+    # we wiil add the database cleaning script later where i delete all the non-verified emails 
     
