@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import { GiHamburgerMenu } from "react-icons/gi";
 import { IoIosArrowDropdownCircle } from "react-icons/io";
+import "../../../public/economy-car.webp";
+import "../../../public/premium-car.webp";
+import "../../../public/Lux-car.webp";
 // Leaflet imports
 import "leaflet/dist/leaflet.css";
 import {
@@ -137,7 +140,7 @@ const Home = () => {
     <div className="flex flex-col justify-center h-full">
       <div className="flex items-center sticky top-0 justify-between h-14 mt-1 mx-2 p-4 bg-blue-400 rounded-md bg-clip-padding backdrop-filter backdrop-blur-sm bg-opacity-50 border border-gray-100">
         <div>Drop</div>
-        <div className="hidden sm:flex">Choose a zebi</div>
+        <div className="hidden sm:flex">Choose</div>
 
         <div className="flex flex-row justify-between items-center">
           <div className="flex bg-slate-500 h-10 rounded-badge items-center me-2 p-1">
@@ -231,34 +234,47 @@ const Home = () => {
           </div>
           {/* Ride options */}
           <div className="p-4">
-            {rideOptions.length > 0 && (
+            {Object.keys(rideOptions).length > 0 && (
               <div>
                 <h2 className="text-xl font-bold mb-2">
                   Choisissez une course
                 </h2>
-                {rideOptions.map((option, index) => (
+                {Object.entries(rideOptions).map(([key, option]) => (
                   <div
-                    key={index}
+                    key={key}
                     className="flex justify-between items-center p-4 border border-gray-300 rounded-lg mb-2"
                   >
+                    {console.log(key)}
                     <div className="flex items-center">
                       <img
-                        src=""
-                        alt="car icon"
+                        src={
+                          key === "economy"
+                            ? "/economy-car.webp"
+                            : key === "premium"
+                            ? "/premium-car.webp"
+                            : key === "luxury"
+                            ? "/Lux-car.webp"
+                            : "" // Optional default image if needed
+                        }
+                        alt={`${key} car`}
                         className="w-12 h-12 mr-4 avatar"
                       />
                       <div>
-                        <div className="font-bold">{option.type}</div>
+                        <div className="font-bold">
+                          {key.charAt(0).toUpperCase() + key.slice(1)}
+                        </div>
                         <div className="text-sm text-gray-600">
                           {option.details}
                         </div>
                         <div className="text-sm">
-                          Dans {option.estimated_price} •{" "}
-                          {time + optionestimated_wait_time}
+                          Dans {option.estimated_wait_time} mins •{" "}
+                          {option.distance_km} km
                         </div>
                       </div>
                     </div>
-                    <div className="font-bold text-lg">{option.price} $CA</div>
+                    <div className="font-bold text-lg">
+                      {option.estimated_price} $CA
+                    </div>
                   </div>
                 ))}
               </div>
