@@ -23,6 +23,8 @@ const Home = () => {
   const [showMarkers, setShowMarkers] = useState(false); // New state to control marker display
   const [routeCoordinates, setRouteCoordinates] = useState([]); // State to store route coordinates
 
+  const [rideOptions, setRideOptions] = useState([]); // State to store ride options
+
   // Fetch autocomplete suggestions from Mapbox
   const fetchSuggestions = async (query, setSuggestions) => {
     if (!query) return setSuggestions([]);
@@ -86,6 +88,32 @@ const Home = () => {
       coord[0],
     ]);
     setRouteCoordinates(route); // Store the route coordinates for rendering
+
+    // Define the ride options
+    const options = [
+      {
+        type: "UberX",
+        price: 22.45,
+        eta: "4 mins",
+        time: "11:37",
+        details: "Faster",
+      },
+      {
+        type: "Comfort",
+        price: 27.35,
+        eta: "5 mins",
+        time: "11:37",
+        details: "Véhicules récents avec plus d'espace",
+      },
+      {
+        type: "UberXL",
+        price: 35.55,
+        eta: "17 mins",
+        time: "11:41",
+        details: "Des courses abordables pour des groupes jusqu'à 6 personnes",
+      },
+    ];
+    setRideOptions(options); // Set the ride options
   };
 
   return (
@@ -176,6 +204,40 @@ const Home = () => {
                 Search
               </button>
             </form>
+          </div>
+          {/* Ride options */}
+          <div className="p-4">
+            {rideOptions.length > 0 && (
+              <div>
+                <h2 className="text-xl font-bold mb-2">
+                  Choisissez une course
+                </h2>
+                {rideOptions.map((option, index) => (
+                  <div
+                    key={index}
+                    className="flex justify-between items-center p-4 border border-gray-300 rounded-lg mb-2"
+                  >
+                    <div className="flex items-center">
+                      <img
+                        src=""
+                        alt="car icon"
+                        className="w-12 h-12 mr-4 avatar"
+                      />
+                      <div>
+                        <div className="font-bold">{option.type}</div>
+                        <div className="text-sm text-gray-600">
+                          {option.details}
+                        </div>
+                        <div className="text-sm">
+                          Dans {option.eta} • {option.time}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="font-bold text-lg">{option.price} $CA</div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </section>
 
