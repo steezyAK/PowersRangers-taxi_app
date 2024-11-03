@@ -16,6 +16,7 @@ const mapboxToken = import.meta.env.VITE_MAPBOX_TOKEN; // Access the token from 
 const Home = () => {
   const [departure, setDeparture] = useState("");
   const [destination, setDestination] = useState("");
+  const [time, setTime] = useState("");
   const [departureCoords, setDepartureCoords] = useState(null);
   const [destinationCoords, setDestinationCoords] = useState(null);
   const [departureSuggestions, setDepartureSuggestions] = useState([]);
@@ -113,7 +114,23 @@ const Home = () => {
         details: "Des courses abordables pour des groupes jusqu'à 6 personnes",
       },
     ];
-    setRideOptions(options); // Set the ride options
+
+    const res = await fetch("http://127.0.0.1:8000/calculate_pricing/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        departureCoords: departureCoords,
+        destinationCoords: destinationCoords,
+        // vehicle_type: vehicleType,
+        time: time,
+      }),
+    });
+    console.log(JSON.stringify(response));
+
+    const option_info = await res.json();
+    console.log(option_info);
+
+    setRideOptions(option_info); // Set the ride options
   };
 
   return (
@@ -136,8 +153,8 @@ const Home = () => {
         </div>
       </div>
 
-      <div className="flex flex-col h-full md:flex-row justify-evenly m-2 p-2 bg-green-600">
-        <section className="flex flex-col justify-start bg-yellow-400 md:m-12">
+      <div className="flex flex-col h-full md:flex-row justify-evenly m-2 p-2">
+        <section className="flex flex-col justify-start md:m-12">
           <div className="text-2xl md:text-4xl text-gray-900 font-bold">
             The title
           </div>
@@ -198,6 +215,13 @@ const Home = () => {
                     ))}
                   </div>
                 )}
+                <input
+                  type="time" // Set the type to "time"
+                  placeholder="Select time"
+                  className="input input-bordered w-full"
+                  value={time}
+                  onChange={(e) => setTime(e.target.value)} // Update state with selected time
+                />
               </div>
 
               <button className="btn btn-outline w-3/4 md:w-full sm:w-1/2">
@@ -229,7 +253,8 @@ const Home = () => {
                           {option.details}
                         </div>
                         <div className="text-sm">
-                          Dans {option.eta} • {option.time}
+                          Dans {option.estimated_price} •{" "}
+                          {time + optionestimated_wait_time}
                         </div>
                       </div>
                     </div>
