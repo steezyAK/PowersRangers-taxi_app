@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+import "./Home.css";
+import { toast } from "react-hot-toast";
+import React, { useEffect, useState } from "react";
 import { GiHamburgerMenu } from "react-icons/gi";
 import { IoIosArrowDropdownCircle } from "react-icons/io";
 import "../../../public/economy-car.webp";
@@ -13,6 +15,8 @@ import {
   Popup,
   Polyline,
 } from "react-leaflet";
+import { useAuthContext } from "../../context/AuthContext";
+import usePayment from "../../hooks/usePayment";
 
 const mapboxToken = import.meta.env.VITE_MAPBOX_TOKEN; // Access the token from the environment variable
 
@@ -28,6 +32,17 @@ const Home = () => {
   const [routeCoordinates, setRouteCoordinates] = useState([]); // State to store route coordinates
 
   const [rideOptions, setRideOptions] = useState([]); // State to store ride options
+
+  const [rideData, setRideData] = useState([]);
+  // State to track the selected item
+  const [selectedKey, setSelectedKey] = useState(null);
+
+  const logRides = () => {
+    console.log(rideOptions);
+  };
+
+  // for the info that
+  const { authUser, setAuthUser } = useAuthContext();
 
   // Fetch autocomplete suggestions from Mapbox
   const fetchSuggestions = async (query, setSuggestions) => {
@@ -77,6 +92,14 @@ const Home = () => {
     console.log(departureCoords);
     console.log(destinationCoords);
 
+    if (!destination || !departure || !time) {
+      setRideOptions([]);
+      setShowMarkers(false);
+      setRouteCoordinates([]);
+
+      return toast.error("Please fill the addresses first !");
+    }
+
     setShowMarkers(true);
 
     // Fetch route between departure and destination using Mapbox Directions API
@@ -93,31 +116,6 @@ const Home = () => {
     ]);
     setRouteCoordinates(route); // Store the route coordinates for rendering
 
-    // Define the ride options
-    const options = [
-      {
-        type: "UberX",
-        price: 22.45,
-        eta: "4 mins",
-        time: "11:37",
-        details: "Faster",
-      },
-      {
-        type: "Comfort",
-        price: 27.35,
-        eta: "5 mins",
-        time: "11:37",
-        details: "Véhicules récents avec plus d'espace",
-      },
-      {
-        type: "UberXL",
-        price: 35.55,
-        eta: "17 mins",
-        time: "11:41",
-        details: "Des courses abordables pour des groupes jusqu'à 6 personnes",
-      },
-    ];
-
     const res = await fetch("http://127.0.0.1:8000/calculate_pricing/", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -128,7 +126,6 @@ const Home = () => {
         time: time,
       }),
     });
-    console.log(JSON.stringify(response));
 
     const option_info = await res.json();
     console.log(option_info);
@@ -136,21 +133,67 @@ const Home = () => {
     setRideOptions(option_info); // Set the ride options
   };
 
+  const handleChoice = (e) => {
+    // setIsClicked(!isClicked);
+    setSelectedKey(e["key"]);
+
+    // console.log(userData);
+    console.log(authUser.email);
+
+    // the userId, departure, destination, rideType, time, eta, price
+
+    setRideData({
+      userEmail: authUser.email,
+      departure_adress: departure ? departure : "",
+      departure_coord: departureCoords ? [departureCoords] : "",
+      destination_adress: destination ? destination : "",
+      destination_coord: destinationCoords ? destinationCoords : "",
+      rideType: e["key"] ? e["key"] : "",
+      eta: e.option.estimated_wait_time ? e.option.estimated_wait_time : null, // minutes : int
+      arrival_time: e.option.arrival_time, // exact time
+      price: e.option.estimated_price, // price : float
+    });
+
+    console.log(rideData);
+    // console.log(JSON.parse(rideData));
+  };
+
+  const handleConfirm = (e) => {
+    // make the payment using paypal
+    const paymentSuccess = usePayment();
+    if (!paymentSuccess) {
+      return toast.error("Payment failed. Please try again.");
+    }
+    toast.success("Payment successful!");
+    //after the payment show the route of the driver that was eta far and animate it auntil it reaches the user's adress
+    // when the driver arrives the annimated route from the departure to the destinatin starts
+    //the user arrives at the destination
+    // end of the trip and the user is then asked to tip the driver
+  };
+
+  const glassmorph =
+    "bg-white-400 rounded-md bg-clip-padding backdrop-filter backdrop-blur-2xl bg-opacity-10  border-gray-100";
   return (
-    <div className="flex flex-col justify-center h-full">
-      <div className="flex items-center sticky top-0 justify-between h-14 mt-1 mx-2 p-4 bg-blue-400 rounded-md bg-clip-padding backdrop-filter backdrop-blur-sm bg-opacity-50 border border-gray-100">
-        <div>Drop</div>
-        <div className="hidden sm:flex">Choose</div>
+    <div className="flex flex-col justify-center h-full page">
+      <div
+        className={`flex items-center sticky top-0 justify-between h-14 mx-2 p-4 mt-7 rounded-lg bg-clip-padding backdrop-filter backdrop-blur-sm bg-opacity-50 border border-gray-100
+      
+      ${glassmorph}`}
+      >
+        <div className="text-2xl text-white font-bold">Drop</div>
+        <div className="hidden sm:flex text-2xl text-white font-bold">
+          Hey {authUser?.username || "Guest"}
+        </div>
 
         <div className="flex flex-row justify-between items-center">
           <div className="flex bg-slate-500 h-10 rounded-badge items-center me-2 p-1">
-            there
+            {authUser?.image || "Ava"}
           </div>
-          <div className="me-1">Jone Doe</div>
+          <div className="me-1 text-white">{authUser?.username || "Guest"}</div>
           <div className="md:hidden">
-            <GiHamburgerMenu className="text-3xl" />
+            <GiHamburgerMenu className="text-3xl text-white" />
           </div>
-          <div className="hidden md:flex">
+          <div className="hidden md:flex text-white dropdown-hover">
             <IoIosArrowDropdownCircle className="text-3xl" />
           </div>
         </div>
@@ -159,18 +202,18 @@ const Home = () => {
       <div className="flex flex-col h-full md:flex-row justify-evenly m-2 p-2">
         <section className="flex flex-col justify-start md:m-12">
           <div className="text-2xl md:text-4xl text-gray-900 font-bold">
-            The title
+            Enter the address
           </div>
           <div className="ms-3 md:m-4 md:p-5">
             <form
               onSubmit={handleSubmit}
-              className="flex flex-col space-y-2 items-center md:min-w-11"
+              className="flex flex-col space-y-3 items-center md:min-w-11"
             >
               {/* Departure Input and Suggestions */}
               <div className="relative w-full max-w-xs">
                 <input
                   type="text"
-                  placeholder="lieu de depart"
+                  placeholder="Departure"
                   className="input input-bordered w-full"
                   value={departure}
                   onChange={(e) => {
@@ -197,7 +240,7 @@ const Home = () => {
               <div className="relative w-full max-w-xs">
                 <input
                   type="text"
-                  placeholder="destination"
+                  placeholder="Destination"
                   className="input input-bordered w-full"
                   value={destination}
                   onChange={(e) => {
@@ -221,7 +264,7 @@ const Home = () => {
                 <input
                   type="time" // Set the type to "time"
                   placeholder="Select time"
-                  className="input input-bordered w-full"
+                  className="input input-bordered w-full mt-3"
                   value={time}
                   onChange={(e) => setTime(e.target.value)} // Update state with selected time
                 />
@@ -233,7 +276,7 @@ const Home = () => {
             </form>
           </div>
           {/* Ride options */}
-          <div className="p-4">
+          <div className="p-4 pb-0">
             {Object.keys(rideOptions).length > 0 && (
               <div>
                 <h2 className="text-xl font-bold mb-2">
@@ -242,9 +285,14 @@ const Home = () => {
                 {Object.entries(rideOptions).map(([key, option]) => (
                   <div
                     key={key}
-                    className="flex justify-between items-center p-4 border border-gray-300 rounded-lg mb-2"
+                    className={`cursor-pointer flex justify-between items-center p-4 border border-gray-300 rounded-lg mb-2 
+                      hover:bg-violet-500 ${
+                        selectedKey === key ? "bg-violet-600" : "bg-white"
+                      }
+                      focus:outline-none focus:ring focus:ring-violet-300`}
+                    onClick={() => handleChoice({ key, option })}
                   >
-                    {console.log(key)}
+                    {/* {console.log(key)} */}
                     <div className="flex items-center">
                       <img
                         src={
@@ -254,7 +302,7 @@ const Home = () => {
                             ? "/premium-car.webp"
                             : key === "luxury"
                             ? "/Lux-car.webp"
-                            : "" // Optional default image if needed
+                            : ""
                         }
                         alt={`${key} car`}
                         className="w-12 h-12 mr-4 avatar"
@@ -280,6 +328,19 @@ const Home = () => {
               </div>
             )}
           </div>
+
+          {/* payment option  */}
+          {Object.keys(rideOptions).length > 0 && (
+            <div className=" flex justify-center text-center m-3 mt-0">
+              {/* {console.log(rideOptions)} */}
+              <button
+                className="btn btn-outline btn-xs sm:btn-sm md:btn-md md:!h-[2px]  lg:!h-[20px] w-3/4 "
+                onClick={(e) => handleConfirm()}
+              >
+                Confirm choice
+              </button>
+            </div>
+          )}
         </section>
 
         {/* Map Container */}

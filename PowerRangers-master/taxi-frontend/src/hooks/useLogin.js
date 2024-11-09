@@ -46,7 +46,11 @@ const useLogin = () => {
       } else {
         throw new Error(data.error);
       }
-      window.location.href = "/comingsoon"; // Adjust the path as needed
+      //if the user is logged in we add the user info to the localstorage
+      localStorage.setItem("user-info", JSON.stringify(data));
+      // we set it so that the entire app can access  the user's info
+      setAuthUser(data);
+      window.location.href = "/home"; // Adjust the path as needed
     } catch (error) {
       console.error("Google login error:", error.message);
       toast.error(error.message);
@@ -96,7 +100,11 @@ const useLogin = () => {
         toast.error("data problem");
         throw new Error(data.error);
       }
-      window.location.href = "/comingsoon"; // Adjust the path as needed
+      //if the user is logged in we add the user info to the localstorage
+      localStorage.setItem("user-info", JSON.stringify(data));
+      // we set it so that the entire app can access  the user's info
+      setAuthUser(data);
+      window.location.href = "/home"; // Adjust the path as needed
     } catch (error) {
       // Check for specific error codes
       if (error.code === "auth/email-already-in-use") {

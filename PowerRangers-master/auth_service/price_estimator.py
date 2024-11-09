@@ -3,7 +3,7 @@ from flask_cors import CORS
 from geopy.geocoders import Nominatim
 from geopy.distance import geodesic
 import random
-from datetime import datetime
+from datetime import datetime, timedelta
 
 app = Flask(__name__)
 
@@ -67,11 +67,17 @@ async def calculate_pricing():
             # Random wait time
             estimated_wait_time = random.randint(5, 15)
 
+            # arrival time
+            arrival_time = time_obj + timedelta(minutes=estimated_wait_time)
+            arrival_time_str = arrival_time.strftime("%H:%M")
+
+
             # Add the results for each vehicle type
             results[vehicle_type] = {
                 "estimated_price": round(estimated_price, 2),
                 "estimated_wait_time": estimated_wait_time,
                 "distance_km": round(distance_km, 2),
+                "arrival_time": arrival_time_str,
                 "details": ""
             }
 
