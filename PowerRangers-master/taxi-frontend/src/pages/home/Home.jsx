@@ -1,4 +1,7 @@
 import "./Home.css";
+import L from "leaflet";
+import iamge from "../../../public/icon.jpg";
+import { useMap } from "react-leaflet";
 import { toast } from "react-hot-toast";
 import React, { useEffect, useState } from "react";
 import { GiHamburgerMenu } from "react-icons/gi";
@@ -16,11 +19,26 @@ import {
   Polyline,
 } from "react-leaflet";
 import { useAuthContext } from "../../context/AuthContext";
-import usePayment from "../../hooks/usePayment";
+import PayPalButton from "./components/paypalButton/PaypalButton";
 
 const mapboxToken = import.meta.env.VITE_MAPBOX_TOKEN; // Access the token from the environment variable
 
 const Home = () => {
+  const MapHandler = ({ onMapLoad }) => {
+    const map = useMap(); // This hook gives access to the map instance
+
+    useEffect(() => {
+      if (onMapLoad) {
+        onMapLoad(map);
+      }
+    }, [map, onMapLoad]);
+
+    return null; // This component doesn't render anything itself
+  };
+  const [mapInstance, setMapInstance] = useState(null);
+  const handleMapLoad = (map) => {
+    setMapInstance(map);
+  };
   const [departure, setDeparture] = useState("");
   const [destination, setDestination] = useState("");
   const [time, setTime] = useState("");
@@ -30,13 +48,15 @@ const Home = () => {
   const [destinationSuggestions, setDestinationSuggestions] = useState([]);
   const [showMarkers, setShowMarkers] = useState(false); // New state to control marker display
   const [routeCoordinates, setRouteCoordinates] = useState([]); // State to store route coordinates
-
+  const [routeDriverToDeparture, setRouteDriverToDeparture] = useState([]);
   const [rideOptions, setRideOptions] = useState([]); // State to store ride options
 
   const [rideData, setRideData] = useState([]);
   // State to track the selected item
   const [selectedKey, setSelectedKey] = useState(null);
 
+  const [driverCoords, setDriverCoords] = useState([45.514919, -73.559753]);
+  const [routeColor, setRouteColor] = useState("blue");
   const logRides = () => {
     console.log(rideOptions);
   };
@@ -116,6 +136,20 @@ const Home = () => {
     ]);
     setRouteCoordinates(route); // Store the route coordinates for rendering
 
+    // Fetch and store routes
+    const responseDriverToDeparture = await fetch(
+      `https://api.mapbox.com/directions/v5/mapbox/driving/${driverCoords[1]},${driverCoords[0]};${departureCoords[1]},${departureCoords[0]}?geometries=geojson&access_token=${mapboxToken}`
+    );
+    const dataDriverToDeparture = await responseDriverToDeparture.json();
+    console.log(dataDriverToDeparture);
+
+    const routeDriverToDeparture =
+      dataDriverToDeparture.routes[0].geometry.coordinates.map((coord) => [
+        coord[1],
+        coord[0],
+      ]);
+    setRouteDriverToDeparture(routeDriverToDeparture);
+
     const res = await fetch("http://127.0.0.1:8000/calculate_pricing/", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -151,24 +185,79 @@ const Home = () => {
       rideType: e["key"] ? e["key"] : "",
       eta: e.option.estimated_wait_time ? e.option.estimated_wait_time : null, // minutes : int
       arrival_time: e.option.arrival_time, // exact time
-      price: e.option.estimated_price, // price : float
+      price: 1, // price : float
     });
 
     console.log(rideData);
     // console.log(JSON.parse(rideData));
+
+    animateFullRoute(
+      mapInstance,
+      driverCoords,
+      departureCoords,
+      destinationCoords
+    );
+  };
+  const animateMarkerAlongRoute = (
+    mapInstance,
+    routeCoordinates,
+    speed = 1000
+  ) => {
+    try {
+      console.log("inside the animatemarker fun");
+
+      if (!mapInstance || routeCoordinates.length === 0) {
+        console.error("Map instance or route coordinates are not provided.");
+        return;
+      }
+
+      // Initialize the marker at the starting point
+      let currentStep = 0;
+      const totalSteps = routeCoordinates.length;
+      console.log("inside the animatemarker fun 2 ");
+
+      let movingMarker = L.marker(routeCoordinates[0]).addTo(mapInstance);
+      console.log("inside the animatemarker fun 3");
+
+      // Function to move the marker at regular intervals
+      const interval = setInterval(() => {
+        if (currentStep >= totalSteps) {
+          clearInterval(interval);
+          console.log("Marker has reached the destination.");
+          return;
+        }
+        console.log("inside the animatemarker fun 4");
+
+        // Update the marker's position to the next coordinate
+        movingMarker.setLatLng(routeCoordinates[currentStep]);
+        currentStep++;
+      }, speed); // Speed in milliseconds between updates
+    } catch (error) {
+      console.log("inside the animatemarker fun errooooor : ", error);
+    }
   };
 
-  const handleConfirm = (e) => {
-    // make the payment using paypal
-    const paymentSuccess = usePayment();
-    if (!paymentSuccess) {
-      return toast.error("Payment failed. Please try again.");
+  // Function to animate the entire journey in two segments
+  const animateFullRoute = (
+    mapInstance,
+    driverCoords,
+    departureCoords,
+    destinationCoords
+  ) => {
+    try {
+      // First segment: Driver to User's departure
+      const firstSegment = [driverCoords, departureCoords];
+      console.log("THE DRIVER IS COMing");
+
+      animateMarkerAlongRoute(mapInstance, firstSegment, 1000, () => {
+        // Callback to start the second segment: User's departure to User's destination
+        const secondSegment = [departureCoords, destinationCoords];
+        console.log("going to the destination");
+        animateMarkerAlongRoute(mapInstance, secondSegment, 1000);
+      });
+    } catch (error) {
+      console.log(error);
     }
-    toast.success("Payment successful!");
-    //after the payment show the route of the driver that was eta far and animate it auntil it reaches the user's adress
-    // when the driver arrives the annimated route from the departure to the destinatin starts
-    //the user arrives at the destination
-    // end of the trip and the user is then asked to tip the driver
   };
 
   const glassmorph =
@@ -292,7 +381,6 @@ const Home = () => {
                       focus:outline-none focus:ring focus:ring-violet-300`}
                     onClick={() => handleChoice({ key, option })}
                   >
-                    {/* {console.log(key)} */}
                     <div className="flex items-center">
                       <img
                         src={
@@ -331,15 +419,44 @@ const Home = () => {
 
           {/* payment option  */}
           {Object.keys(rideOptions).length > 0 && (
-            <div className=" flex justify-center text-center m-3 mt-0">
-              {/* {console.log(rideOptions)} */}
-              <button
-                className="btn btn-outline btn-xs sm:btn-sm md:btn-md md:!h-[2px]  lg:!h-[20px] w-3/4 "
-                onClick={(e) => handleConfirm()}
-              >
-                Confirm choice
-              </button>
-            </div>
+            // <div
+            //   className=" flex justify-center text-center m-3 mt-0"
+            //   id="paypal-button-container"
+            // >
+            //   {/* {console.log(rideOptions)} */}
+            //   {/* <button
+            //     className="btn btn-outline btn-xs sm:btn-sm md:btn-md md:!h-[2px]  lg:!h-[20px] w-3/4 "
+            //     onClick={(e) => handleConfirm()}
+            //   > */}
+
+            //   {/* </button> */}
+            // </div>
+            <PayPalButton
+              amount={rideData.price}
+              onSuccess={(details) => {
+                alert(
+                  "Transaction completed by " + details.payer.name.given_name
+                );
+
+                setRideOptions([]);
+                // Clear previous markers and add new ones for the driver and user.
+                setShowMarkers(false);
+                // setRouteCoordinates([]); // Clear previous route
+
+                // driverCoords = [45.514919, -73.559753];
+                // setDriverCoords(driverCoords);
+                setShowMarkers(true);
+                animateFullRoute(
+                  mapInstance,
+                  driverCoords,
+                  departureCoords,
+                  destinationCoords
+                );
+
+                // Redirect to a different page or perform any other state updates
+                // handleConfirm(); // Replace with your desired path
+              }}
+            />
           )}
         </section>
 
@@ -354,22 +471,55 @@ const Home = () => {
               url={`https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/{z}/{x}/{y}?access_token=${mapboxToken}`}
               attribution='&copy; <a href="https://www.mapbox.com/about/maps/">Mapbox</a> contributors'
             />
+            <MapHandler onMapLoad={handleMapLoad} />
 
-            <Marker position={[45.6352, -73.609821]}>
+            {/* <Marker position={[45.6352, -73.609821]}>
               <Popup>Montréal-Nord, Canada</Popup>
-            </Marker>
+            </Marker> */}
 
             {/* Show markers only if showMarkers is true */}
-            {showMarkers && departureCoords && (
+            {/* {showMarkers && departureCoords && (
               <Marker position={departureCoords}></Marker>
             )}
             {showMarkers && destinationCoords && (
               <Marker position={destinationCoords}></Marker>
-            )}
+            )} */}
 
             {/* Draw the route as a Polyline */}
-            {routeCoordinates.length > 0 && (
+            {/* {routeCoordinates.length > 0 && (
               <Polyline positions={routeCoordinates} color="blue" />
+            )} */}
+
+            {driverCoords && (
+              <Marker position={driverCoords}>
+                <Popup>Driver Location</Popup>
+              </Marker>
+            )}
+
+            {showMarkers && departureCoords && (
+              <Marker position={departureCoords}>
+                <Popup>User Departure</Popup>
+              </Marker>
+            )}
+
+            {showMarkers && departureCoords && (
+              <Marker position={destinationCoords}>
+                <Popup>User Departure</Popup>
+              </Marker>
+            )}
+
+            {showMarkers && destinationCoords && routeColor === "red" && (
+              <Marker position={destinationCoords}>
+                <Popup>Destination</Popup>
+              </Marker>
+            )}
+
+            {routeCoordinates.length > 0 && (
+              <Polyline positions={routeCoordinates} color={"red"} />
+            )}
+
+            {routeCoordinates.length > 0 && (
+              <Polyline positions={routeDriverToDeparture} color={"blue"} />
             )}
           </MapContainer>
         </div>

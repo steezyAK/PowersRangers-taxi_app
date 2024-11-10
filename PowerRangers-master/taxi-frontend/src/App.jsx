@@ -8,6 +8,15 @@ import Home from "./pages/home/Home";
 import Profile from "./pages/profile/Profile";
 import ProtectedRoute from "./pages/protectedRoute/ProtectedRoute";
 
+// import { PayPalScriptProvider } from "@paypal/react-paypal-js";
+// import Checkout from './Checkout';
+
+// const initialOptions = {
+//   "client-id": import.meta.env.VITE_CLIENT_ID,
+//   currency: "CAD",
+//   intent: "capture",
+// };
+
 function App() {
   return (
     <div data-theme="light" className="h-screen w-screen">
