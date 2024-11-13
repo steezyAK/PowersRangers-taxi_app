@@ -35,7 +35,9 @@ function App() {
         {/* Protected Routes */}
         <Route element={<ProtectedRoute />}>
           <Route path="/ride" element={<Home />} />
-          <Route path="/profile" element={<Profile />} />
+          <Route path="/profile" element={<ComingSoon />} />
+          <Route path="/settings" element={<ComingSoon />} />
+          <Route path="/history" element={<ComingSoon />} />
         </Route>
       </Routes>
     </div>
