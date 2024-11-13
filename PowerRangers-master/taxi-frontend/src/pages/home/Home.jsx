@@ -20,6 +20,8 @@ import {
 } from "react-leaflet";
 import { useAuthContext } from "../../context/AuthContext";
 import PayPalButton from "./components/paypalButton/PaypalButton";
+import createRides from "../../api/rides/createRides";
+import logout from "../../api/auth/logout";
 
 const mapboxToken = import.meta.env.VITE_MAPBOX_TOKEN; // Access the token from the environment variable
 
@@ -39,6 +41,15 @@ const Home = () => {
   const handleMapLoad = (map) => {
     setMapInstance(map);
   };
+
+  const [isOpen, setIsOpen] = useState(false);
+
+  const toggleMenu = () => {
+    console.log(isOpen);
+
+    setIsOpen(!isOpen);
+  };
+
   const [departure, setDeparture] = useState("");
   const [destination, setDestination] = useState("");
   const [time, setTime] = useState("");
@@ -56,6 +67,10 @@ const Home = () => {
   const [selectedKey, setSelectedKey] = useState(null);
 
   const [driverCoords, setDriverCoords] = useState([45.514919, -73.559753]);
+  const [showDriverMarker, setShowDriverMarker] = useState(false);
+  const [showDriverRoute, setShowDriverRoute] = useState(false);
+  const [showTrajectRoute, setShowTrajectRoute] = useState(false);
+
   const [routeColor, setRouteColor] = useState("blue");
   const logRides = () => {
     console.log(rideOptions);
@@ -116,6 +131,7 @@ const Home = () => {
       setRideOptions([]);
       setShowMarkers(false);
       setRouteCoordinates([]);
+      setShowTrajectRoute(false);
 
       return toast.error("Please fill the addresses first !");
     }
@@ -135,6 +151,7 @@ const Home = () => {
       coord[0],
     ]);
     setRouteCoordinates(route); // Store the route coordinates for rendering
+    setShowTrajectRoute(true);
 
     // Fetch and store routes
     const responseDriverToDeparture = await fetch(
@@ -185,27 +202,32 @@ const Home = () => {
       rideType: e["key"] ? e["key"] : "",
       eta: e.option.estimated_wait_time ? e.option.estimated_wait_time : null, // minutes : int
       arrival_time: e.option.arrival_time, // exact time
-      price: 1, // price : float
+      price: e.option.estimated_price, // price : float
     });
 
     console.log(rideData);
     // console.log(JSON.parse(rideData));
 
-    animateFullRoute(
-      mapInstance,
-      driverCoords,
-      departureCoords,
-      destinationCoords
-    );
+    // animateFullRoute(
+    //   mapInstance,
+    //   driverCoords,
+    //   departureCoords,
+    //   destinationCoords
+    // );
+
+    // when the driver is selected we show the driver route and hide the traject route
+    setShowTrajectRoute(false);
+    setShowDriverRoute(true);
+    setShowDriverMarker(true);
   };
+
   const animateMarkerAlongRoute = (
     mapInstance,
     routeCoordinates,
-    speed = 1000
+    speed = 500,
+    callback
   ) => {
     try {
-      console.log("inside the animatemarker fun");
-
       if (!mapInstance || routeCoordinates.length === 0) {
         console.error("Map instance or route coordinates are not provided.");
         return;
@@ -214,26 +236,23 @@ const Home = () => {
       // Initialize the marker at the starting point
       let currentStep = 0;
       const totalSteps = routeCoordinates.length;
-      console.log("inside the animatemarker fun 2 ");
-
       let movingMarker = L.marker(routeCoordinates[0]).addTo(mapInstance);
-      console.log("inside the animatemarker fun 3");
 
       // Function to move the marker at regular intervals
       const interval = setInterval(() => {
         if (currentStep >= totalSteps) {
           clearInterval(interval);
           console.log("Marker has reached the destination.");
+          if (callback) callback(); // Start the next segment if a callback is provided
           return;
         }
-        console.log("inside the animatemarker fun 4");
 
         // Update the marker's position to the next coordinate
         movingMarker.setLatLng(routeCoordinates[currentStep]);
         currentStep++;
-      }, speed); // Speed in milliseconds between updates
+      }, speed); // Adjusted the speed for a smoother animation
     } catch (error) {
-      console.log("inside the animatemarker fun errooooor : ", error);
+      console.log("Error in animating marker:", error);
     }
   };
 
@@ -245,18 +264,31 @@ const Home = () => {
     destinationCoords
   ) => {
     try {
-      // First segment: Driver to User's departure
-      const firstSegment = [driverCoords, departureCoords];
-      console.log("THE DRIVER IS COMing");
+      console.log("Animating from driver to user's departure");
 
-      animateMarkerAlongRoute(mapInstance, firstSegment, 1000, () => {
-        // Callback to start the second segment: User's departure to User's destination
-        const secondSegment = [departureCoords, destinationCoords];
-        console.log("going to the destination");
-        animateMarkerAlongRoute(mapInstance, secondSegment, 1000);
+      // Animate the first segment (driver to user's departure)
+      animateMarkerAlongRoute(mapInstance, routeDriverToDeparture, 1000, () => {
+        console.log("Driver has arrived at the user's departure");
+        toast.success("The driver has arrived at your door step !");
+        setShowTrajectRoute(true);
+        setShowDriverRoute(false);
+        setShowDriverMarker(false);
+
+        // Add a 10-second timeout before starting the next animation
+        setTimeout(() => {
+          console.log(
+            "Starting animation from user's departure to destination"
+          );
+          animateMarkerAlongRoute(mapInstance, routeCoordinates, 1000, () => {
+            toast.success("You have reached your destination !");
+            setShowTrajectRoute(false);
+            setShowDriverRoute(false);
+            setShowMarkers(false);
+          });
+        }, 10000); // 10,000 milliseconds = 10 seconds
       });
     } catch (error) {
-      console.log(error);
+      console.log("Error in animating full route:", error);
     }
   };
 
@@ -265,7 +297,7 @@ const Home = () => {
   return (
     <div className="flex flex-col justify-center h-full page">
       <div
-        className={`flex items-center sticky top-0 justify-between h-14 mx-2 p-4 mt-7 rounded-lg bg-clip-padding backdrop-filter backdrop-blur-sm bg-opacity-50 border border-gray-100
+        className={` z-[10000] flex items-center sticky top-0 justify-between h-14 mx-2 p-4 mt-7 rounded-lg bg-clip-padding backdrop-filter backdrop-blur-sm bg-opacity-50 border border-gray-100
       
       ${glassmorph}`}
       >
@@ -275,15 +307,47 @@ const Home = () => {
         </div>
 
         <div className="flex flex-row justify-between items-center">
-          <div className="flex bg-slate-500 h-10 rounded-badge items-center me-2 p-1">
-            {authUser?.image || "Ava"}
-          </div>
-          <div className="me-1 text-white">{authUser?.username || "Guest"}</div>
-          <div className="md:hidden">
-            <GiHamburgerMenu className="text-3xl text-white" />
-          </div>
-          <div className="hidden md:flex text-white dropdown-hover">
-            <IoIosArrowDropdownCircle className="text-3xl" />
+          <div className="menu-container">
+            {!isOpen && (
+              <>
+                <div
+                  className=" md:flex text-white dropdown-hover"
+                  onClick={toggleMenu}
+                >
+                  <GiHamburgerMenu className="text-3xl" />
+                </div>
+              </>
+            )}
+            {isOpen && (
+              <div className="dropdown">
+                <button onClick={toggleMenu} className="close-button">
+                  X
+                </button>
+                <ul>
+                  <li
+                    onClick={() => {
+                      window.location.href = "/profile";
+                    }}
+                  >
+                    Settings
+                  </li>
+                  <li
+                    onClick={() => {
+                      window.location.href = "/history";
+                    }}
+                  >
+                    History
+                  </li>
+                  <li
+                    onClick={() => {
+                      logout();
+                    }}
+                  >
+                    Logout
+                  </li>
+                </ul>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -419,39 +483,33 @@ const Home = () => {
 
           {/* payment option  */}
           {Object.keys(rideOptions).length > 0 && (
-            // <div
-            //   className=" flex justify-center text-center m-3 mt-0"
-            //   id="paypal-button-container"
-            // >
-            //   {/* {console.log(rideOptions)} */}
-            //   {/* <button
-            //     className="btn btn-outline btn-xs sm:btn-sm md:btn-md md:!h-[2px]  lg:!h-[20px] w-3/4 "
-            //     onClick={(e) => handleConfirm()}
-            //   > */}
-
-            //   {/* </button> */}
-            // </div>
             <PayPalButton
               amount={rideData.price}
-              onSuccess={(details) => {
-                alert(
+              onSuccess={async (details) => {
+                toast.success(
                   "Transaction completed by " + details.payer.name.given_name
                 );
 
-                setRideOptions([]);
-                // Clear previous markers and add new ones for the driver and user.
-                setShowMarkers(false);
-                // setRouteCoordinates([]); // Clear previous route
+                // Only create ride after successful payment
+                try {
+                  await createRides(rideData);
+                  toast.success("Ride created successfully!");
 
-                // driverCoords = [45.514919, -73.559753];
-                // setDriverCoords(driverCoords);
-                setShowMarkers(true);
-                animateFullRoute(
-                  mapInstance,
-                  driverCoords,
-                  departureCoords,
-                  destinationCoords
-                );
+                  setRideOptions([]);
+                  // Clear previous markers and add new ones for the driver and user.
+                  setShowMarkers(false);
+                  // setRouteCoordinates([]); // Clear previous route
+
+                  setShowMarkers(true);
+                  animateFullRoute(
+                    mapInstance,
+                    driverCoords,
+                    departureCoords,
+                    destinationCoords
+                  );
+                } catch (error) {
+                  toast.error("Failed to create ride. Please try again.");
+                }
 
                 // Redirect to a different page or perform any other state updates
                 // handleConfirm(); // Replace with your desired path
@@ -461,7 +519,7 @@ const Home = () => {
         </section>
 
         {/* Map Container */}
-        <div className="bg-orange-500 flex-grow">
+        <div className="bg-orange-500 flex-grow min-h-[280px]">
           <MapContainer
             center={[45.5927, -73.5994]}
             zoom={13}
@@ -490,7 +548,7 @@ const Home = () => {
               <Polyline positions={routeCoordinates} color="blue" />
             )} */}
 
-            {driverCoords && (
+            {showDriverMarker && (
               <Marker position={driverCoords}>
                 <Popup>Driver Location</Popup>
               </Marker>
@@ -502,23 +560,17 @@ const Home = () => {
               </Marker>
             )}
 
-            {showMarkers && departureCoords && (
-              <Marker position={destinationCoords}>
-                <Popup>User Departure</Popup>
-              </Marker>
-            )}
-
             {showMarkers && destinationCoords && routeColor === "red" && (
               <Marker position={destinationCoords}>
                 <Popup>Destination</Popup>
               </Marker>
             )}
 
-            {routeCoordinates.length > 0 && (
+            {showTrajectRoute && (
               <Polyline positions={routeCoordinates} color={"red"} />
             )}
 
-            {routeCoordinates.length > 0 && (
+            {showDriverRoute && (
               <Polyline positions={routeDriverToDeparture} color={"blue"} />
             )}
           </MapContainer>

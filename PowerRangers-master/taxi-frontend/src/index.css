@@ -17,6 +17,11 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Custom toast styling */
+.react-hot-toast {
+  z-index: 2000; /* Ensure this is higher than your header's z-index */
+}
+
 .bg-gradient {
   background: rgb(29, 108, 128);
   background: linear-gradient(

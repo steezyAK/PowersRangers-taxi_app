@@ -7,6 +7,7 @@ import ComingSoon from "./pages/ComingSoon/ComingSoon";
 import Home from "./pages/home/Home";
 import Profile from "./pages/profile/Profile";
 import ProtectedRoute from "./pages/protectedRoute/ProtectedRoute";
+import LandingPage from "./pages/landingPage/LandingPage";
 
 // import { PayPalScriptProvider } from "@paypal/react-paypal-js";
 // import Checkout from './Checkout';
@@ -29,10 +30,11 @@ function App() {
         <Route path="/signup" element={<Signup />} />
         <Route path="/login" element={<Login />} />
         <Route path="/comingsoon" element={<ComingSoon />} />
+        <Route path="/home" element={<LandingPage />} />
 
         {/* Protected Routes */}
         <Route element={<ProtectedRoute />}>
-          <Route path="/home" element={<Home />} />
+          <Route path="/ride" element={<Home />} />
           <Route path="/profile" element={<Profile />} />
         </Route>
       </Routes>

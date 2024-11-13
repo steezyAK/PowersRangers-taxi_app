@@ -1,0 +1,188 @@
+/* Base styles and gradient background */
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  background: rgb(86, 170, 191);
+  background: linear-gradient(
+    90deg,
+    rgba(86, 170, 191, 1) 0%,
+    rgba(9, 1, 78, 1) 100%
+  );
+  font-family: system-ui, -apple-system, sans-serif;
+}
+/* Main container styles */
+.min-h-screen {
+  min-height: 100vh;
+  position: relative;
+}
+/* Header styles */
+header {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+header a {
+  color: #fff;
+  text-decoration: none;
+  transition: opacity 0.2s ease;
+}
+header a:hover {
+  opacity: 0.8;
+}
+nav a {
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  transition: background-color 0.2s ease;
+}
+nav a:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+/* Hero section styles */
+.bg-blue-50 {
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+}
+/* Main content and sections */
+main {
+  position: relative;
+  z-index: 1;
+}
+section {
+  padding: 4rem 0;
+}
+/* Button styles */
+button {
+  padding: 1rem 2rem;
+  border-radius: 50px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border: none;
+}
+button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.2);
+}
+.bg-blue-600 {
+  background-color: #5339e6;
+  color: white;
+}
+.bg-blue-600:hover {
+  background-color: #4328d5;
+}
+button.bg-white {
+  background-color: white;
+  color: #5339e6;
+  border: 2px solid #5339e6;
+}
+button.bg-white:hover {
+  background-color: #f8f9fa;
+}
+/* Feature cards */
+.grid {
+  display: grid;
+  gap: 2rem;
+}
+@media (min-width: 768px) {
+  .md\:grid-cols-4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+.text-center {
+  text-align: center;
+}
+/* Feature icons */
+.lucide-icon {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 1rem;
+  color: #5339e6;
+}
+/* Card-like elements */
+.feature-card {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 1rem;
+  padding: 2rem;
+  transition: transform 0.2s ease;
+}
+.feature-card:hover {
+  transform: translateY(-5px);
+}
+/* Footer styles */
+footer {
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 4rem 0 2rem;
+  position: relative;
+  z-index: 1;
+}
+footer a {
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+footer a:hover {
+  color: white;
+}
+.footer-grid {
+  display: grid;
+  gap: 2rem;
+}
+@media (min-width: 768px) {
+  .footer-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+/* Responsive adjustments */
+@media screen and (max-width: 768px) {
+  .header {
+    padding: 2rem 1rem;
+  }
+  .content {
+    padding: 2rem 1rem;
+  }
+  .grid {
+    grid-template-columns: 1fr;
+  }
+  button {
+    width: 100%;
+    margin: 0.5rem 0;
+  }
+}
+/* Additional utility classes */
+.max-w-7xl {
+  max-width: 80rem;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+.space-y-2 > * + * {
+  margin-top: 0.5rem;
+}
+.space-x-4 > * + * {
+  margin-left: 1rem;
+}
+/* Text styles */
+h1,
+h2,
+h3,
+h4 {
+  color: #fff;
+  margin: 0 0 1rem;
+}
+p {
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.6;
+}
+/* Animation classes */
+.transition-colors {
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+.hover\:bg-blue-700:hover {
+  background-color: #4328d5;
+}
+.hover\:bg-blue-50:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
