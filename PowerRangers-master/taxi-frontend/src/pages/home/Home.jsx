@@ -2,7 +2,7 @@ import "./Home.css";
 import L from "leaflet";
 import iamge from "../../../public/icon.jpg";
 import { useMap } from "react-leaflet";
-import { toast } from "react-hot-toast";
+import { toast, Toaster } from "react-hot-toast";
 import React, { useEffect, useState } from "react";
 import { GiHamburgerMenu } from "react-icons/gi";
 import { IoIosArrowDropdownCircle } from "react-icons/io";
@@ -284,6 +284,7 @@ const Home = () => {
             setShowTrajectRoute(false);
             setShowDriverRoute(false);
             setShowMarkers(false);
+            window.location.href = "/history"; // Replace "/new-path" with the desired URL or path
           });
         }, 10000); // 10,000 milliseconds = 10 seconds
       });
@@ -445,6 +446,7 @@ const Home = () => {
                       focus:outline-none focus:ring focus:ring-violet-300`}
                     onClick={() => handleChoice({ key, option })}
                   >
+                    {console.log("choice clicked")}
                     <div className="flex items-center">
                       <img
                         src={
@@ -483,38 +485,40 @@ const Home = () => {
 
           {/* payment option  */}
           {Object.keys(rideOptions).length > 0 && (
-            <PayPalButton
-              amount={rideData.price}
-              onSuccess={async (details) => {
-                toast.success(
-                  "Transaction completed by " + details.payer.name.given_name
-                );
-
-                // Only create ride after successful payment
-                try {
-                  await createRides(rideData);
-                  toast.success("Ride created successfully!");
-
-                  setRideOptions([]);
-                  // Clear previous markers and add new ones for the driver and user.
-                  setShowMarkers(false);
-                  // setRouteCoordinates([]); // Clear previous route
-
-                  setShowMarkers(true);
-                  animateFullRoute(
-                    mapInstance,
-                    driverCoords,
-                    departureCoords,
-                    destinationCoords
+            <>
+              <PayPalButton
+                amount={rideData.price}
+                onSuccess={async (details) => {
+                  toast.success(
+                    "Transaction completed by " + details.payer.name.given_name
                   );
-                } catch (error) {
-                  toast.error("Failed to create ride. Please try again.");
-                }
 
-                // Redirect to a different page or perform any other state updates
-                // handleConfirm(); // Replace with your desired path
-              }}
-            />
+                  // Only create ride after successful payment
+                  try {
+                    // await createRides(rideData);
+                    toast.success("Ride created successfully!");
+
+                    setRideOptions([]);
+                    // Clear previous markers and add new ones for the driver and user.
+                    setShowMarkers(false);
+                    // setRouteCoordinates([]); // Clear previous route
+
+                    setShowMarkers(true);
+                    animateFullRoute(
+                      mapInstance,
+                      driverCoords,
+                      departureCoords,
+                      destinationCoords
+                    );
+                  } catch (error) {
+                    toast.error("Failed to create ride. Please try again.");
+                  }
+
+                  // Redirect to a different page or perform any other state updates
+                  // handleConfirm(); // Replace with your desired path
+                }}
+              />
+            </>
           )}
         </section>
 

@@ -21,7 +21,16 @@ import LandingPage from "./pages/landingPage/LandingPage";
 function App() {
   return (
     <div data-theme="light" className="h-screen w-screen">
-      <Toaster />
+      <Toaster
+        position="top-center"
+        toastOptions={{
+          style: {
+            zIndex: 110000,
+            marginTop: "50px", // Adds 100px margin from the top
+          },
+        }}
+      />
+
       <Routes>
         {/* Redirect root to /profile */}
         <Route path="/" element={<Navigate to="/home" />} />

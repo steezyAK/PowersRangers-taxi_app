@@ -28,23 +28,29 @@ const LandingPage = () => {
               Drop
             </a>
           </div>
-          <nav className="space-x-6">
-            <Link to="/settings" className="text-gray-600 hover:text-blue-600">
-              Settings
-            </Link>
-            <Link to="/history" className="text-gray-600 hover:text-blue-600">
-              History
-            </Link>
-            <Link
-              to="#"
-              onClick={() => {
-                logout();
-              }}
-              className="text-gray-600 hover:text-blue-600"
-            >
-              Logout
-            </Link>
-          </nav>
+          {authUser && (
+            <nav className="space-x-6">
+              <Link
+                to="/settings"
+                className="text-gray-600 hover:text-blue-600"
+              >
+                Settings
+              </Link>
+              <Link to="/history" className="text-gray-600 hover:text-blue-600">
+                History
+              </Link>
+
+              <Link
+                to="#"
+                onClick={() => {
+                  logout();
+                }}
+                className="text-gray-600 hover:text-blue-600"
+              >
+                Logout
+              </Link>
+            </nav>
+          )}
         </div>
       </header>
 

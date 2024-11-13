@@ -50,9 +50,9 @@ const PayPalButton = ({ amount, onSuccess }) => {
 
     document.body.appendChild(script);
 
-    return () => {
-      document.body.removeChild(script);
-    };
+    // return () => {
+    //   document.body.removeChild(script);
+    // };
   }, [amount, onSuccess]);
 
   return <div id="paypal-button-container"></div>;
